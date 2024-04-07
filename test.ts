@@ -1,4 +1,4 @@
-import { state, from } from "./src/index.ts";
+import { state, from, readonly } from "./src/index.ts";
 
 import { assertEquals } from "https://deno.land/std@0.221.0/assert/mod.ts";
 import {
@@ -145,4 +145,10 @@ Deno.test("lazy change alerts, eager subscriptions", () => {
   assertSpyCalls(spyFn, 1);
   number.set(2);
   assertSpyCalls(spyFn, 2);
+});
+
+Deno.test("readonly", () => {
+  const writable = state("hello");
+  const noWritable = readonly(writable);
+  assertEquals("set" in noWritable, false);
 });

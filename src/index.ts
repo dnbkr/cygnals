@@ -191,3 +191,19 @@ export function from<T, D extends Readable<unknown>[]>(
     },
   };
 }
+
+/**
+ * create a readable from a writable
+ * @param state the writable to create a readable from
+ * @returns a readable derived from the writable
+ * @example ```typescript
+ * const writable = state(42)
+ * const readable = readonly(writable)
+ *
+ * console.log(readable.current()) // 42
+ * ```
+ */
+export function readonly<T>(state: Readable<T>): Readable<T> {
+  const { current, subscribe, onChange } = state;
+  return { current, subscribe, onChange };
+}
