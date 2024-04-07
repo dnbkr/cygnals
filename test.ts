@@ -1,4 +1,4 @@
-import { state } from "./src/index.ts";
+import { state, from } from "./src/index.ts";
 
 import { assertEquals } from "https://deno.land/std@0.221.0/assert/mod.ts";
 import {
@@ -55,4 +55,94 @@ Deno.test("unsubscribe to state", () => {
   unsubscribe();
   message.set("world");
   assertSpyCalls(callback, 1);
+});
+
+Deno.test("get current computed value", () => {
+  const message = state("hello");
+  const shouted = from(message, (message) => message.toUpperCase());
+  assertEquals(shouted.current(), "HELLO");
+});
+
+Deno.test("get computed value after state change", () => {
+  const message = state("hello");
+  const shouted = from(message, (message) => message.toUpperCase());
+  assertEquals(shouted.current(), "HELLO");
+  message.set("world");
+  assertEquals(shouted.current(), "WORLD");
+});
+
+Deno.test("subscribe to computed changes", () => {
+  const callback = spy();
+  const message = state("hello");
+  const shouted = from(message, (message) => message.toUpperCase());
+  shouted.subscribe(callback);
+  assertSpyCallArg(callback, 0, 0, "HELLO");
+  message.set("world");
+  assertSpyCallArg(callback, 1, 0, "WORLD");
+  assertSpyCalls(callback, 2);
+});
+
+Deno.test("subscribe to computed from computed", () => {
+  const callback = spy();
+  const message = state("hello");
+  const shouted = from(message, (message) => message.toUpperCase());
+  const formatted = from(shouted, (message) => `Message: ${message}`);
+  formatted.subscribe(callback);
+  assertSpyCallArg(callback, 0, 0, "Message: HELLO");
+  message.set("world");
+  assertSpyCallArg(callback, 1, 0, "Message: WORLD");
+  assertSpyCalls(callback, 2);
+});
+
+Deno.test("multiple dependencies computed", () => {
+  const callback = spy();
+  const one = state(1);
+  const two = state(2);
+  const three = state(3);
+  const sum = from([one, two, three], (one, two, three) => one + two + three);
+  sum.subscribe(callback);
+  assertSpyCallArg(callback, 0, 0, 6);
+  assertSpyCalls(callback, 1);
+});
+
+Deno.test("multiple dependencies computed with change", () => {
+  const callback = spy();
+  const one = state(1);
+  const two = state(2);
+  const three = state(3);
+  const sum = from([one, two, three], (one, two, three) => one + two + three);
+  sum.subscribe(callback);
+  assertSpyCallArg(callback, 0, 0, 6);
+  three.set(6);
+  assertSpyCallArg(callback, 1, 0, 9);
+  assertSpyCalls(callback, 2);
+});
+
+Deno.test("lazy computations", () => {
+  const spyFn = spy();
+  const number = state(1);
+  const double = from(number, (number) => {
+    spyFn();
+    return number * 2;
+  });
+  assertSpyCalls(spyFn, 0);
+  number.set(2);
+  assertSpyCalls(spyFn, 0);
+  double.current();
+  assertSpyCalls(spyFn, 1);
+});
+
+Deno.test("lazy change alerts, eager subscriptions", () => {
+  const spyFn = spy();
+  const number = state(1);
+  const double = from(number, (number) => {
+    spyFn();
+    return number * 2;
+  });
+  double.onChange(() => {});
+  assertSpyCalls(spyFn, 0);
+  double.subscribe(() => {});
+  assertSpyCalls(spyFn, 1);
+  number.set(2);
+  assertSpyCalls(spyFn, 2);
 });

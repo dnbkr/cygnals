@@ -87,3 +87,107 @@ export function state<T>(initialValue: T): Writable<T> {
     },
   };
 }
+
+/**
+ * Get the type of the value of a Readable
+ */
+export type ValueOf<T extends Readable<unknown>> = ReturnType<T["current"]>;
+
+/**
+ * Get the types of the values in a list of Readables
+ */
+type ValuesOf<T extends Readable<unknown>[]> = {
+  [I in keyof T]: ValueOf<T[I]>;
+};
+
+/**
+ * a unique symbol to represent an undefined value in an
+ * environment where `undefined` might in fact _be_ the value
+ * and we need to distingush between the two
+ */
+const empty = Symbol();
+
+/**
+ * the unique 'type' of `empty`
+ */
+type Empty = typeof empty;
+
+/**
+ * Compute a new value from one or more existing Readables
+ * @param dependency a readable to track
+ * @param fn a function to create the computed value
+ * @example ```typescript
+ * const message = state("hello")
+ * const shout = from(message, message => message.toUpperCase())
+ * console.log(shout.current()) // "HELLO"
+ *
+ * const a = state(2)
+ * const b = state(2)
+ * const sum = from([a, b], (a, b) => a + b)
+ * console.log(sum.current()) // 4
+ * ```
+ */
+export function from<T, D extends Readable<unknown>>(
+  dependency: D,
+  fn: (value: ValueOf<D>) => T
+): Readable<T>;
+/**
+ *
+ * @param dependencies a list of readables to track
+ * @param fn a function to create the computed value
+ * ```
+ */
+export function from<T, D extends Readable<unknown>[]>(
+  dependencies: [...D],
+  fn: (...values: ValuesOf<D>) => T
+): Readable<T>;
+export function from<T, D extends Readable<unknown>[]>(
+  dependencies: D[number] | [...D],
+  fn: (...values: ValuesOf<D>) => T
+): Readable<T> {
+  const deps = Array.isArray(dependencies) ? dependencies : [dependencies];
+
+  function computeValue() {
+    const depValues = deps.map((dep) => dep.current()) as ValuesOf<D>;
+    return fn(...depValues);
+  }
+
+  const value = state<T | Empty>(empty);
+  const dirty = state(true);
+
+  function safelyGetCurrentValue() {
+    const current = value.current();
+    const isDirty = dirty.current();
+    if (current === empty || isDirty) {
+      const computed = computeValue();
+      if (computed !== current) {
+        dirty.set(false);
+        value.set(computed);
+      }
+      return computed;
+    }
+    return current;
+  }
+
+  deps.forEach((dep) => dep.onChange(() => dirty.set(true)));
+
+  function callCallback(callback: ValueCallback<T>) {
+    return function (dirty: boolean) {
+      if (dirty) {
+        callback(safelyGetCurrentValue());
+      }
+    };
+  }
+
+  return {
+    current() {
+      return safelyGetCurrentValue();
+    },
+    subscribe(callback) {
+      return dirty.subscribe(callCallback(callback));
+    },
+    onChange(callback) {
+      return dirty.onChange(callCallback(callback));
+    },
+  };
+}
