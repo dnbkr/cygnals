@@ -5,6 +5,9 @@ import {
   limit,
   debounce,
   unwrapPromise,
+  fulfilled,
+  pending,
+  rejected,
 } from "./src/index.ts";
 
 import { assertEquals } from "https://deno.land/std@0.221.0/assert/mod.ts";
@@ -289,6 +292,108 @@ Deno.test("unwraped promise subscription", async () => {
       result: "resolved: /foo",
     });
     assertSpyCalls(spyFn, 4);
+  } finally {
+    time.restore();
+  }
+});
+
+Deno.test("fulfilled promise", async () => {
+  const time = new FakeTime();
+  const spyFn = spy();
+  try {
+    const fatch = (url: string) =>
+      new Promise<string>((resolve) =>
+        setTimeout(() => {
+          resolve("resolved: " + url);
+        }, 500)
+      );
+
+    const url = state("/api");
+    const result = fulfilled(from(url, fatch));
+    result.subscribe(spyFn);
+    assertSpyCallArg(spyFn, 0, 0, undefined);
+    await time.tickAsync(1000);
+    assertSpyCallArg(spyFn, 1, 0, "resolved: /api");
+    url.set("/foo");
+    await time.tickAsync(1000);
+    assertSpyCallArg(spyFn, 2, 0, "resolved: /foo");
+    assertSpyCalls(spyFn, 3);
+  } finally {
+    time.restore();
+  }
+});
+
+Deno.test("pending promise status", async () => {
+  const time = new FakeTime();
+  const spyFn = spy();
+  try {
+    const fatch = (url: string) =>
+      new Promise<string>((resolve) =>
+        setTimeout(() => {
+          resolve("resolved: " + url);
+        }, 500)
+      );
+
+    const url = state("/api");
+    const isPending = pending(from(url, fatch));
+    isPending.subscribe(spyFn);
+    assertSpyCallArg(spyFn, 0, 0, true);
+    await time.tickAsync(1000);
+    assertSpyCallArg(spyFn, 1, 0, false);
+    url.set("/foo");
+    assertSpyCallArg(spyFn, 2, 0, true);
+    await time.tickAsync(1000);
+    assertSpyCallArg(spyFn, 3, 0, false);
+    assertSpyCalls(spyFn, 4);
+  } finally {
+    time.restore();
+  }
+});
+
+Deno.test("rejected promise", async () => {
+  const time = new FakeTime();
+  const spyFn = spy();
+  try {
+    const fatch = <T extends string>(url: T) =>
+      new Promise<{ result: true; url: T }>((_, reject) =>
+        setTimeout(() => {
+          spyFn();
+          reject("rejected: " + url);
+        }, 500)
+      );
+
+    const url = state("/api");
+    const result = unwrapPromise(from(url, fatch));
+    assertEquals(result.current().pending, true);
+    assertEquals(result.current().result, undefined);
+    assertEquals(result.current().error, undefined);
+    await time.tickAsync(1000);
+    assertEquals(result.current().pending, false);
+    assertEquals(result.current().result, undefined);
+    assertEquals(result.current().error, "rejected: /api");
+  } finally {
+    time.restore();
+  }
+});
+
+Deno.test("rejected promise status", async () => {
+  const time = new FakeTime();
+  const spyFn = spy();
+  try {
+    const fatch = (url: string) =>
+      new Promise<string>((_, reject) =>
+        setTimeout(() => {
+          reject("rejected: " + url);
+        }, 500)
+      );
+
+    const url = state("/api");
+    const error = rejected(from(url, fatch));
+    error.subscribe(spyFn);
+    assertSpyCallArg(spyFn, 0, 0, undefined);
+    await time.tickAsync(1000);
+    assertSpyCallArg(spyFn, 1, 0, "rejected: /api");
+    assertSpyCalls(spyFn, 2);
   } finally {
     time.restore();
   }

@@ -338,3 +338,67 @@ export function unwrapPromise<T>(
 
   return readonly(unwrapped);
 }
+
+/**
+ * extract a readable of just the fulfulled value of the promise.
+ *
+ * this will retain the latest known value, even if the promise changes
+ * to pending or rejects.
+ *
+ * **this will `await` the promise**
+ *
+ * @param promise a readable containing a promise
+ * @returns a readable of the promise's last known value
+ * @example ```typescript
+ * const url = state("/api")
+ * const request = from(url, fetch)
+ * const response = fullfilled(request)
+ * response.onChange(console.log) // eventually will log the response
+ * ```
+ */
+export function fulfilled<T>(
+  promise: Readable<Promise<T>>
+): Readable<T | undefined> {
+  return from(
+    limit(
+      unwrapPromise(promise),
+      ({ pending, error }) => !pending && error === undefined
+    ),
+    (promise) => promise?.result
+  );
+}
+
+/**
+ * extract the pending state of a readable promise
+ *
+ * **this will `await` the promise**
+ * @param promise a readable containing a promise
+ * @returns a readable containing a boolean, which is true of the promise is pending
+ * @example ```typescript
+ * const url = state("/api")
+ * const request = from(url, fetch)
+ * const loading = pending(request)
+ * response.onChange(console.log) // eventually will log `true`
+ * ```
+ */
+export function pending<T>(promise: Readable<Promise<T>>): Readable<boolean> {
+  return from(unwrapPromise(promise), ({ pending }) => pending);
+}
+
+/**
+ * extract any rejection value of a readable promise
+ *
+ * **this will `await` the promise**
+ *
+ * @param promise a readable containing a promise
+ * @returns a readable containing the reason for a rejection, if any
+ * @example ```typescript
+ * const url = state("/api")
+ * const request = from(url, fetch)
+ * const errors = rejected(request)
+ * errors.onChange(console.log) // eventually will log... nothing, if all goes well!
+ * ```
+ */
+export function rejected<T>(promise: Readable<Promise<T>>): Readable<unknown> {
+  return from(unwrapPromise(promise), ({ error }) => error);
+}
