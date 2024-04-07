@@ -256,3 +256,24 @@ export function limit<T>(
 
   return readonly(value);
 }
+
+/**
+ * a debounce limitation. useful to slow down a series of rapid
+ * changes from a source
+ * @param ms the number of miliseconds to wait before accepting the latest value
+ * @returns a debounce limitation function
+ * @example ```typescript
+ * const textInputValue = state("")
+ * const debounced = limit(textInputValue, debounce(500))
+ * ```
+ */
+export function debounce<T>(ms: number): Limitation<T> {
+  let timeout: number | undefined;
+  return function (value, writable) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      writable?.set(value);
+    }, ms);
+    return false;
+  };
+}

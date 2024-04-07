@@ -1,4 +1,4 @@
-import { state, from, readonly, limit } from "./src/index.ts";
+import { state, from, readonly, limit, debounce } from "./src/index.ts";
 
 import { assertEquals } from "https://deno.land/std@0.221.0/assert/mod.ts";
 import {
@@ -6,6 +6,7 @@ import {
   assertSpyCallArg,
   spy,
 } from "https://deno.land/std@0.221.0/testing/mock.ts";
+import { FakeTime } from "https://deno.land/std@0.221.0/testing/time.ts";
 
 Deno.test("get current state", () => {
   const message = state("hello");
@@ -173,4 +174,26 @@ Deno.test("limitation subscription", () => {
   assertSpyCallArg(callback, 0, 0, "hello");
   string.set("world");
   assertSpyCalls(callback, 1);
+});
+
+Deno.test("debounce limitation", () => {
+  const time = new FakeTime();
+  try {
+    const callback = spy();
+    const string = state("hello");
+    const debounced = limit(string, debounce(1000));
+    debounced.onChange(callback);
+    assertSpyCalls(callback, 0);
+    string.set("w");
+    string.set("wo");
+    string.set("wor");
+    string.set("worl");
+    string.set("world");
+    assertSpyCalls(callback, 0);
+    time.tick(1000);
+    assertSpyCalls(callback, 1);
+    assertSpyCallArg(callback, 0, 0, "world");
+  } finally {
+    time.restore();
+  }
 });
