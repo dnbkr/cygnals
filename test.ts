@@ -1,4 +1,4 @@
-import { state, from, readonly } from "./src/index.ts";
+import { state, from, readonly, limit } from "./src/index.ts";
 
 import { assertEquals } from "https://deno.land/std@0.221.0/assert/mod.ts";
 import {
@@ -151,4 +151,26 @@ Deno.test("readonly", () => {
   const writable = state("hello");
   const noWritable = readonly(writable);
   assertEquals("set" in noWritable, false);
+});
+
+Deno.test("allow all limitation", () => {
+  const string = state("hello");
+  const limited = limit(string, () => true);
+  assertEquals(limited.current(), "hello");
+});
+
+Deno.test("prevent all limitation", () => {
+  const string = state("hello");
+  const limited = limit(string, () => false);
+  assertEquals(limited.current(), null);
+});
+
+Deno.test("limitation subscription", () => {
+  const callback = spy();
+  const string = state("hello");
+  const limited = limit(string, (string) => string === "hello");
+  limited.subscribe(callback);
+  assertSpyCallArg(callback, 0, 0, "hello");
+  string.set("world");
+  assertSpyCalls(callback, 1);
 });

@@ -207,3 +207,52 @@ export function readonly<T>(state: Readable<T>): Readable<T> {
   const { current, subscribe, onChange } = state;
   return { current, subscribe, onChange };
 }
+
+/**
+ * a function to limit a readable. is is passed a value to evaluate
+ * and should return a boolean to decide if the value should be kept
+ * or not. It is also passed the result writable, which can be useful
+ * for limitations that need to delay the value being written
+ */
+export type Limitation<T> = (
+  value: T,
+  writable?: Writable<T | null>
+) => boolean;
+
+/**
+ * limit a source readable using one or more limitation functions
+ * @param source the readable to limit
+ * @param limitations a series of function to decide if a value should be accepted
+ * @returns the result readable, after limitations have been applied
+ * @example ```typescript
+ * const number = state(1)
+ *
+ * const oddOnly = limit(number, number => number % 2 === 1)
+ *
+ * console.log(oddOnly.current()) // 1
+ * number.set(2)
+ * console.log(oddOnly.current()) // 1
+ * number.set(3)
+ * console.log(oddOnly.current()) // 3
+ * ```
+ */
+export function limit<T>(
+  source: Readable<T>,
+  ...limitations: Limitation<T>[]
+): Readable<T | null> {
+  const initialSource = source.current();
+
+  const value = state(
+    limitations.every((limitation) => limitation(initialSource))
+      ? initialSource
+      : null
+  );
+
+  source.onChange((source) => {
+    if (limitations.every((limitation) => limitation(source, value))) {
+      value.set(source);
+    }
+  });
+
+  return readonly(value);
+}
