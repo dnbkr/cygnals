@@ -277,3 +277,64 @@ export function debounce<T>(ms: number): Limitation<T> {
     return false;
   };
 }
+
+/**
+ * a promise that has been 'unwrapped' so that you can observe it's state
+ */
+export interface UnwrappedPromise<T> {
+  /**
+   * the promise's result, or undefined if not resolved
+   */
+  result: T | undefined;
+  /**
+   * true if the promise is 'pending'
+   */
+  pending: boolean;
+  /**
+   * a reason that the promise may have rejected with.
+   * could be a string, or an error objected, or anything
+   */
+  error: unknown | undefined;
+}
+
+/**
+ * create a readable of an unwrapped promise, from a readable of a promise
+ *
+ * **this will `await` the promise**
+ *
+ * @param readable a readable containing a promise
+ * @returns the unwrapped value of the promise
+ * @example ```typescript
+ * const url = state("/api")
+ * const request = from(url, fetch)
+ * const result = unwrapPromise(request)
+ *
+ * console.log(result.current().result) // undefined
+ *
+ * // wait some time for the fetch to complete
+ *
+ * console.log(result.current().result) // the response from fetch
+ *
+ * ```
+ */
+export function unwrapPromise<T>(
+  readable: Readable<Promise<T>>
+): Readable<UnwrappedPromise<T>> {
+  const unwrapped = state<UnwrappedPromise<T>>({
+    result: undefined,
+    pending: false,
+    error: undefined,
+  });
+
+  readable.subscribe(async (promise) => {
+    unwrapped.set({ error: undefined, result: undefined, pending: true });
+    try {
+      const result = await promise;
+      unwrapped.set({ pending: false, result, error: undefined });
+    } catch (error) {
+      unwrapped.set({ pending: false, result: undefined, error });
+    }
+  });
+
+  return readonly(unwrapped);
+}

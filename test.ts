@@ -1,4 +1,11 @@
-import { state, from, readonly, limit, debounce } from "./src/index.ts";
+import {
+  state,
+  from,
+  readonly,
+  limit,
+  debounce,
+  unwrapPromise,
+} from "./src/index.ts";
 
 import { assertEquals } from "https://deno.land/std@0.221.0/assert/mod.ts";
 import {
@@ -193,6 +200,95 @@ Deno.test("debounce limitation", () => {
     time.tick(1000);
     assertSpyCalls(callback, 1);
     assertSpyCallArg(callback, 0, 0, "world");
+  } finally {
+    time.restore();
+  }
+});
+
+Deno.test("promise won't resolve unless current called", async () => {
+  const time = new FakeTime();
+  const spyFn = spy();
+  try {
+    const fatch = <T extends string>(url: T) =>
+      new Promise<{ result: true; url: T }>((resolve) =>
+        setTimeout(() => {
+          spyFn();
+          resolve({ result: true, url });
+        }, 500)
+      );
+
+    const url = state("/api");
+    from(url, fatch);
+    assertSpyCalls(spyFn, 0);
+    await time.tickAsync(1000);
+    assertSpyCalls(spyFn, 0);
+  } finally {
+    time.restore();
+  }
+});
+
+Deno.test("unwraped promise", async () => {
+  const time = new FakeTime();
+  const spyFn = spy();
+  try {
+    const fatch = <T extends string>(url: T) =>
+      new Promise<{ result: true; url: T }>((resolve) =>
+        setTimeout(() => {
+          spyFn();
+          resolve({ result: true, url });
+        }, 500)
+      );
+
+    const url = state("/api");
+    const result = unwrapPromise(from(url, fatch));
+    assertEquals(result.current().pending, true);
+    assertEquals(result.current().result, undefined);
+    await time.tickAsync(1000);
+    assertEquals(result.current().pending, false);
+    assertEquals(result.current().result?.result, true);
+  } finally {
+    time.restore();
+  }
+});
+
+Deno.test("unwraped promise subscription", async () => {
+  const time = new FakeTime();
+  const spyFn = spy();
+  try {
+    const fatch = (url: string) =>
+      new Promise<string>((resolve) =>
+        setTimeout(() => {
+          resolve("resolved: " + url);
+        }, 500)
+      );
+
+    const url = state("/api");
+    const result = unwrapPromise(from(url, fatch));
+    result.subscribe(spyFn);
+    assertSpyCallArg(spyFn, 0, 0, {
+      error: undefined,
+      pending: true,
+      result: undefined,
+    });
+    await time.tickAsync(1000);
+    assertSpyCallArg(spyFn, 1, 0, {
+      error: undefined,
+      pending: false,
+      result: "resolved: /api",
+    });
+    url.set("/foo");
+    assertSpyCallArg(spyFn, 2, 0, {
+      error: undefined,
+      pending: true,
+      result: undefined,
+    });
+    await time.tickAsync(1000);
+    assertSpyCallArg(spyFn, 3, 0, {
+      error: undefined,
+      pending: false,
+      result: "resolved: /foo",
+    });
+    assertSpyCalls(spyFn, 4);
   } finally {
     time.restore();
   }
