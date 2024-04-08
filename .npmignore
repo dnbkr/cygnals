@@ -1,0 +1,6 @@
+.github
+.vscode
+src
+test.ts
+tsconfig.json
+jsr.json

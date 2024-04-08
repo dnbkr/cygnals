@@ -1,0 +1,30 @@
+{
+  "name": "cygnals",
+  "version": "0.1.0",
+  "keywords": [
+    "signals",
+    "reactive",
+    "state"
+  ],
+  "description": "Tools for working with reactive data",
+  "license": "MIT",
+  "author": "Daniel Baker",
+  "homepage": "https://github.com/dnbkr/cygnals#readme",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepublish": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dnbkr/cygnals.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dnbkr/cygnals/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.5",
+    "typescript": "^5.4.4"
+  }
+}
