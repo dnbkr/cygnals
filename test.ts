@@ -9,6 +9,7 @@ import {
   pending,
   rejected,
 } from "./src/index.ts";
+import { fromEvent } from "./src/dom.ts";
 
 import { assertEquals } from "https://deno.land/std@0.221.0/assert/mod.ts";
 import {
@@ -397,4 +398,37 @@ Deno.test("rejected promise status", async () => {
   } finally {
     time.restore();
   }
+});
+
+Deno.test("DOM: fromEvent", () => {
+  const mockElement = {
+    _callbacks: new Set<(event: MouseEvent) => void>(),
+    addEventListener(_event: "click", callback: (event: MouseEvent) => void) {
+      this._callbacks.add(callback);
+    },
+    removeEventListener(
+      _event: "click",
+      callback: (event: MouseEvent) => void
+    ) {
+      this._callbacks.delete(callback);
+    },
+    click() {
+      this._callbacks.forEach((callback) => {
+        callback({ event: true } as unknown as MouseEvent);
+      });
+    },
+  };
+  const element = mockElement as unknown as HTMLElement;
+
+  const callback = spy();
+  const clicks = fromEvent(element, "click");
+  assertEquals(clicks.current(), undefined);
+  const unsub = clicks.onChange(callback);
+  element.click();
+  assertSpyCallArg(callback, 0, 0, { event: true });
+  element.click();
+  assertSpyCallArg(callback, 1, 0, { event: true });
+  unsub();
+  element.click();
+  assertSpyCalls(callback, 2);
 });

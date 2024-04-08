@@ -220,3 +220,20 @@ const results = fulfilled(
 ```
 
 You need to specify the number of milliseconds the debounce should wait for subsequent changes before firing.
+
+### DOM
+
+If you're client-side you can bind to DOM events easily:
+
+```typescript
+import { fromEvent } from "cygnals/dom";
+//                        ^^^^^^^^^^^^^
+//             notice the different import path
+//
+
+const button = getElementById("my-button");
+
+const clicks = fromEvent(button, "click");
+
+clicks.onChange(console.log); // this will log every time the button is clicked
+```

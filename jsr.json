@@ -2,5 +2,8 @@
   "$schema": "https://jsr.io/schema/config-file.v1.json",
   "name": "@dnbkr/cygnals",
   "version": "0.1.1",
-  "exports": "./src/index.ts"
+  "exports": {
+    ".": "./src/index.ts",
+    "/dom": "./src/dom.ts"
+  }
 }

@@ -1,7 +1,9 @@
 .github
 .vscode
 src
+cygnet.png
+deno.jsonc
+deno.lock
+jsr.json
 test.ts
 tsconfig.json
-jsr.json
-cygnet.png

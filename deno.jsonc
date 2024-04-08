@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.window", "DOM"]
+  },
+  "unstable": ["sloppy-imports"]
+}

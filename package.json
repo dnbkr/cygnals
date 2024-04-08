@@ -10,8 +10,8 @@
   "license": "MIT",
   "author": "Daniel Baker",
   "homepage": "https://github.com/dnbkr/cygnals#readme",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "type": "module",
   "scripts": {
     "prepublish": "tsc"
