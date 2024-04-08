@@ -11,14 +11,27 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-      - uses: denoland/setup-deno@v1
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
         with:
           deno-version: vx.x.x
 
       - name: Run Tests
         run: deno test test.ts
 
-      - name: Publish package
+      - name: Publish package to JSR
         run: npx jsr publish
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup package for CI
+        run: npm ci
+
+      - name: Publish package to NPM
+        run: npm publish
