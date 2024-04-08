@@ -268,7 +268,7 @@ export function limit<T>(
  * ```
  */
 export function debounce<T>(ms: number): Limitation<T> {
-  let timeout: number | undefined;
+  let timeout: ReturnType<typeof setTimeout>;
   return function (value, writable) {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
