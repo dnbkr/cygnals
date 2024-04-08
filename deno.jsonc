@@ -1,4 +1,10 @@
 {
+  "name": "@dnbkr/cygnals",
+  "version": "0.2.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "/dom": "./src/dom.ts"
+  },
   "compilerOptions": {
     "lib": ["deno.window", "DOM"]
   },

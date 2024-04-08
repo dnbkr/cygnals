@@ -4,6 +4,5 @@ src
 cygnet.png
 deno.jsonc
 deno.lock
-jsr.json
 test.ts
 tsconfig.json
