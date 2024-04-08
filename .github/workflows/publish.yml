@@ -1,9 +1,6 @@
 name: Publish
 
-on:
-  push:
-    branches:
-      - main
+on: workflow_dispatch
 
 jobs:
   publish:
@@ -15,5 +12,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: vx.x.x
+
+      - name: Run Tests
+        run: deno test test.ts
+
       - name: Publish package
         run: npx jsr publish
