@@ -4,7 +4,13 @@
 
 ![an illustration of a cygnet](cygnet.png)
 
-Tools for working with reactive data
+**Tools for working with reactive data**
+
+Written in Typescript
+
+637 bytes after Terser minification and GZIP compression
+
+Zero dependencies
 
 </div>
 
