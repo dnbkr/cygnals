@@ -1,6 +1,39 @@
+<div align="center">
+
 # Cygnals
 
+![an illustration of a cygnet](cygnet.png)
+
 Tools for working with reactive data
+
+</div>
+
+## Installation
+
+This package is published to JSR and NPM
+
+### NPM
+
+https://www.npmjs.com/package/cygnals
+
+| Package Manager | Command               |
+| --------------- | --------------------- |
+| NPM             | `npm install cygnals` |
+| Yarn            | `yarn add cygnals`    |
+| pnpm            | `pnpm cygnals`        |
+| Bun             | `bun add cygnals`     |
+
+### JSR
+
+https://jsr.io/@dnbkr/cygnals
+
+| Package Manager | Command                           |
+| --------------- | --------------------------------- |
+| Deno            | `deno add @dnbkr/cygnals`         |
+| NPM             | `npx jsr add @dnbkr/cygnals`      |
+| Yarn            | `yarn dlx jsr add @dnbkr/cygnals` |
+| pnpm            | `pnpm dlx jsr add @dnbkr/cygnals` |
+| Bun             | `bunx jsr add @dnbkr/cygnals`     |
 
 ## Tutorial
 
