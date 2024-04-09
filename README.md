@@ -8,11 +8,25 @@
 
 Written in Typescript
 
-637 bytes after Terser minification and GZIP compression
+Tiny file size
 
 Zero dependencies
 
 </div>
+
+- [Cygnals](#cygnals)
+  - [Installation](#installation)
+    - [NPM](#npm)
+    - [JSR](#jsr)
+  - [Tutorial](#tutorial)
+    - [State](#state)
+    - [Computed / derived values](#computed--derived-values)
+    - [Async](#async)
+    - [Readonly](#readonly)
+    - [Limitations](#limitations)
+      - [Debounce](#debounce)
+    - [DOM](#dom)
+    - [React](#react)
 
 ## Installation
 
@@ -236,4 +250,38 @@ const button = getElementById("my-button");
 const clicks = fromEvent(button, "click");
 
 clicks.onChange(console.log); // this will log every time the button is clicked
+```
+
+### React
+
+You can use the bundled react hook to make use of any readable:
+
+```tsx
+import { state } from "cygnals";
+import { useCygnal } from "cygnals/react";
+
+const message = state("Hello!");
+
+export function Component() {
+  const value = useCygnal(message);
+  return <p>{value}</p>;
+}
+```
+
+you can see the value in the normal way:
+
+```tsx
+import { state } from "cygnals";
+import { useCygnal } from "cygnals/react";
+
+const count = state(0);
+
+export function Component() {
+  const value = useCygnal(count);
+  return (
+    <button onClick={() => count.set(count.current() + 1)}>
+      You have clicked the button {value} times
+    </button>
+  );
+}
 ```
