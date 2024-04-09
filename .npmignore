@@ -1,8 +1,0 @@
-.github
-.vscode
-src
-cygnet.png
-deno.jsonc
-deno.lock
-test.ts
-tsconfig.json

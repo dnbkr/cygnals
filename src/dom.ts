@@ -1,4 +1,4 @@
-import { type Readable, state } from "./index";
+import { type Readable, state } from "./index.ts";
 
 /**
  * create a readable of events from a DOM element

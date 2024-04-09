@@ -22,6 +22,9 @@ jobs:
       - name: Run Tests
         run: deno test test.ts
 
+      - name: Build for NPM
+        run: deno run -A scripts/build_npm.ts
+
       - name: Publish package to JSR
         run: npx jsr publish
 
@@ -32,10 +35,7 @@ jobs:
         with:
           registry-url: "https://registry.npmjs.org"
 
-      - name: Setup package for CI
-        run: npm ci
-
       - name: Publish package to NPM
-        run: npm publish
+        run: npm publish /npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
